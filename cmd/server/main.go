@@ -2,18 +2,29 @@ package main
 
 import (
   "fmt"
-  "time"
+  "sync"
 )
 
-func say(s string) {
-  for i := 0; i < 5; i++ {
-    time.Sleep(100 * time.Millisecond)
-    fmt.Println(s)
-  }
-}
-
 func main() {
-  go say("Sabin")
-  say("OnWeb")
+  var wg sync.WaitGroup
+
+  ch := make(chan int)
+  x, y, z := 1, 2, 3
+
+  wg.Add(1)
+  go receive(ch, &wg)
+
+  ch <- x 
+  ch <- y
+  ch <- z
+  close(ch)
+  wg.Wait()
 }
 
+func receive(ch chan int, wg *sync.WaitGroup) {
+  for v := range ch {
+    fmt.Println(v)
+  }
+
+  wg.Done()
+}
