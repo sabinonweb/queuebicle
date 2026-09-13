@@ -10,7 +10,7 @@ func main() {
 	ch1 := make(chan Job)
 	ch2 := make(chan Job)
 
-	wg.Add(5)
+	wg.Add(6)
 
 	jobs1 := []Job{
 		newJob("job-1", "alpha"),
