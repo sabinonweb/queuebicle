@@ -13,11 +13,6 @@ func main() {
 
 	wg.Add(5)
 
-	for i := 0; i < 5; i++ {
-		go receive(&wg, ch1, ch2)
-
-	}
-
 	jobs1 := []Job{
 		newJob("job-1", "alpha"),
 		newJob("job-2", "beta"),
@@ -46,6 +41,18 @@ func main() {
 
 	tenant1 := newTenant("tenant-a", ch1)
 	tenant2 := newTenant("tenant-b", ch2)
+  
+  tenants := []chan Job {
+    tenant1.queue, tenant2.queue,
+  }
+
+  shared := make(chan Job)
+
+  for i := 0; i < 5; i++ {
+		go receive(&wg, shared)
+	}
+
+  go dispatcher(tenants, shared, &wg)
 
 	for _, job := range jobs1 {
 		tenant1.enqueue(job)
@@ -57,36 +64,17 @@ func main() {
 		tenant2.enqueue(job)
 	}
 
-	close(ch2)
+	close(ch2) 
 
 	wg.Wait()
 }
 
-func receive(wg *sync.WaitGroup, ch1 chan Job, ch2 chan Job) {
-  ch1Ok := false
-	ch2Ok := false
+func receive(wg *sync.WaitGroup, shared chan Job) {
+  fmt.Println("starting workers")
+  for j := range shared {
+    fmt.Println("Job", j)
+  }
 
-outer:
-	for {
-		select {
-		  case v, ok := <-ch1:
-			  if ok {
-				  fmt.Println(v)
-			  } else {
-				  ch1Ok = true
-			  }
-
-		  case v, ok := <-ch2:
-			  if ok {
-				  fmt.Println(v)
-			  } else {
-				  ch2Ok = true
-			  }
-		}
-
-    if ch1Ok && ch2Ok {
-				break outer
-			}
-	}
-	wg.Done()
+  wg.Done()
 }
+
